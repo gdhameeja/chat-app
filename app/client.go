@@ -21,6 +21,7 @@ func (c *client) read() {
 	fmt.Printf("DEBUG: client %d read gets called\n", c.id)
 	defer c.socket.Close()
 	for {
+		fmt.Println("DEBUG(client): Read loop")
 		_, msg, err := c.socket.ReadMessage()
 		fmt.Println("DEBUG(client): incoming message to client", c.id, msg)
 		if err != nil {
