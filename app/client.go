@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -18,12 +16,10 @@ type client struct {
 }
 
 func (c *client) read() {
-	fmt.Printf("DEBUG: client %d read gets called\n", c.id)
 	defer c.socket.Close()
 	for {
-		fmt.Println("DEBUG(client): Read loop")
+		// `ReadMessage` call is blocking
 		_, msg, err := c.socket.ReadMessage()
-		fmt.Println("DEBUG(client): incoming message to client", c.id, msg)
 		if err != nil {
 			return
 		}
@@ -32,10 +28,8 @@ func (c *client) read() {
 }
 
 func (c *client) write() {
-	fmt.Printf("DEBUG: client %d write gets called\n", c.id)
 	defer c.socket.Close()
 	for msg := range c.send {
-		fmt.Println("DEBUG(client): client is writing messages ", c.id, msg)
 		err := c.socket.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			return

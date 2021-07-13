@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -46,16 +45,13 @@ func (r *Room) Run() {
 		select {
 		case client := <-r.join:
 			// joining
-			fmt.Println("DEBUG(Run): joining", client.id)
 			r.clients[client] = true
 		case client := <-r.leave:
 			// leaving
-			fmt.Println("DEBUG(Run): leaving", client.id)
 			delete(r.clients, client)
 			close(client.send)
 		case msg := <-r.forward:
 			// forward message to all clients
-			fmt.Println("DEBUG(Run): received message", msg)
 			for client := range r.clients {
 				client.send <- msg
 			}

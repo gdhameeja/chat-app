@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -9,6 +10,8 @@ import (
 
 	"gdhameeja/chat/app"
 )
+
+var addr = flag.String("addr", ":8080", "The port on which the server listens.")
 
 // templ represents a single template
 type templateHandler struct {
@@ -23,10 +26,12 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		t.templ = template.Must(template.ParseFiles(filepath.Join("templates",
 			t.filename)))
 	})
-	t.templ.Execute(w, nil)
+	t.templ.Execute(w, req)
 }
 
 func main() {
+	flag.Parse() // parse the flags
+
 	r := app.NewRoom()
 
 	http.Handle("/", &templateHandler{filename: "chat.html"})
@@ -36,7 +41,7 @@ func main() {
 	go r.Run()
 
 	// start the web server
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 }
