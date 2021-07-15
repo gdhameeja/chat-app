@@ -9,6 +9,9 @@ import (
 	"text/template"
 
 	"gdhameeja/chat/app"
+
+	"github.com/stretchr/gomniauth"
+	"github.com/stretchr/gomniauth/providers/google"
 )
 
 var addr = flag.String("addr", ":8080", "The port on which the server listens.")
@@ -32,10 +35,22 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func main() {
 	flag.Parse() // parse the flags
 
+	// setup gomniauth
+	gomniauth.SetSecurityKey("PUT YOUR AUTH KEY HERE")
+	gomniauth.WithProviders(
+		google.New(
+			"658096693830-dslla6nj42804cjahp6ls7pp64cig2pa.apps.googleusercontent.com",
+			"Xbg0hWCxvsromVx6yY4O-Y6i",
+			"http://localhost:8080/auth/callback/google",
+		),
+	)
+
 	r := app.NewRoom()
 
-	http.Handle("/", &templateHandler{filename: "chat.html"})
+	http.Handle("/chat", app.MustAuth(&templateHandler{filename: "chat.html"}))
+	http.Handle("/login", &templateHandler{filename: "login.html"})
 	http.Handle("/room", r)
+	http.HandleFunc("/auth/", app.LoginHandler)
 
 	// get the room going
 	go r.Run()
