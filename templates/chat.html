@@ -16,9 +16,13 @@
 	</script>
 	<script>
 		$(function() {
+			// NOTE: there is no loop here, but the functions can get called again
+			// and again as they are sort of even handlers.
 			var socket = null;
 			var msgBox = $("#chatbox textarea");
 			var messages = $("#messages");
+			// this function does not work on page load.
+			// it works whenever the submit button is clicked.
 			$("#chatbox").submit(function() {
 				if (!msgBox.val())  return false;
 				if (!socket) {
@@ -30,6 +34,9 @@
 				return false;
 			});
 
+			// this code block gets executed on page load.
+			// our page loads only once, and we open a web socket conn to the server.
+			// NOTE: there is no loop here, so the connection is initialized only once.
 			if (!window["WebSocket"]) {
 				alert("Error: Your browser does not support web sockets")
 			} else {
