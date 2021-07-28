@@ -54,13 +54,19 @@ func main() {
 		),
 	)
 
-	r := app.NewRoom()
+	r := app.NewRoom(app.UseFileSystemAvatar)
 
 	// request first goes to `MustAuth` which chains to templateHandler. (decorator pattern)
 	http.Handle("/chat", app.MustAuth(&templateHandler{filename: "chat.html"}))
-
+	http.Handle("/upload", app.MustAuth(&templateHandler{filename: "upload.html"}))
 	http.Handle("/login", &templateHandler{filename: "login.html"})
+
 	http.Handle("/room", r)
+	// we're stripping the "/avatars/" prefix; else the fileserver would get the uri:
+	// /avatars/avatars/filename instead of /avatars/filename
+	http.Handle("/avatars/", http.StripPrefix("/avatars/", http.FileServer(http.Dir("./avatars"))))
+
+	http.HandleFunc("/uploader", app.UploadHandler)
 	http.HandleFunc("/auth/", app.LoginHandler)
 	http.HandleFunc("/logout", func(w http.ResponseWriter, req *http.Request) {
 		http.SetCookie(w, &http.Cookie{
