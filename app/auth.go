@@ -1,7 +1,9 @@
 package app
 
 import (
+	"crypto/md5"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -81,9 +83,14 @@ func LoginHandler(wr http.ResponseWriter, req *http.Request) {
 				provider, err), http.StatusInternalServerError)
 		}
 
+		m := md5.New()
+		io.WriteString(m, strings.ToLower(user.Email()))
+		userId := fmt.Sprintf("%x", m.Sum(nil))
 		authCookieValue := objx.New(map[string]interface{}{
+			"userId":     userId,
 			"name":       user.Name(),
 			"avatar_url": user.AvatarURL(),
+			"email":      user.Email(),
 		}).MustBase64()
 		http.SetCookie(wr, &http.Cookie{
 			Name:  "auth",
