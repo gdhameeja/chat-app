@@ -15,7 +15,9 @@ import (
 	"github.com/stretchr/objx"
 )
 
-var addr = flag.String("addr", ":8080", "The port on which the server listens.")
+var (
+	addr = flag.String("addr", ":8080", "The port on which the server listens.")
+)
 
 // templ represents a single template
 type templateHandler struct {
@@ -54,7 +56,7 @@ func main() {
 		),
 	)
 
-	r := app.NewRoom(app.UseFileSystemAvatar)
+	r := app.NewRoom()
 
 	// request first goes to `MustAuth` which chains to templateHandler. (decorator pattern)
 	http.Handle("/chat", app.MustAuth(&templateHandler{filename: "chat.html"}))

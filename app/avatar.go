@@ -8,6 +8,24 @@ import (
 	"strings"
 )
 
+type TryAvatars []Avatar
+
+func (a TryAvatars) GetAvatarURL(u ChatUser) (string, error) {
+	for _, avatar := range a {
+		if url, err := avatar.GetAvatarURL(u); err == nil {
+			return url, err
+		}
+	}
+
+	return "", ErrNoAvatarURL
+}
+
+var avatars TryAvatars = TryAvatars{
+	UseFileSystemAvatar,
+	UseAuthAvatar,
+	UseGravatar,
+}
+
 // ErrNoAvatar is the error that is returned when the
 // Avatar instance is unable to provide an avatar URL.
 var ErrNoAvatarURL = errors.New("chat: Unable to get an avatar URL.")
@@ -19,48 +37,38 @@ type Avatar interface {
 	// or returns an error if something goes wrong.
 	// ErrNoAvatarURL is returned if the object is unable to get
 	// a URL for the speicified client.
-	GetAvatarURL(c *client) (string, error)
+	GetAvatarURL(ChatUser) (string, error)
 }
 
 type AuthAvatar struct{}
 
-func (AuthAvatar) GetAvatarURL(c *client) (string, error) {
-	// avatar_url is set in auth while setting the cookie
-	if url, ok := c.userData["avatar_url"]; ok {
-		if urlStr, ok := url.(string); ok {
-			return urlStr, nil
-		}
+func (AuthAvatar) GetAvatarURL(user ChatUser) (string, error) {
+	url := user.AvatarURL()
+	if len(url) == 0 {
+		return "", ErrNoAvatarURL
 	}
 
-	return "", ErrNoAvatarURL
+	return url, nil
 }
 
 type GravatarAvatar struct{}
 
-func (g GravatarAvatar) GetAvatarURL(c *client) (string, error) {
-	if userId, ok := c.userData["userId"]; ok {
-		if userIdStr, ok := userId.(string); ok {
-			// double slash before www means, if current site is running on http,
-			// use http://www.gravatar.com, if current site is using https,
-			// use https://www.gravatar.com
-			return "//www.gravatar.com/avatar/" + userIdStr, nil
-		}
-	}
-
-	return "", ErrNoAvatarURL
+func (g GravatarAvatar) GetAvatarURL(user ChatUser) (string, error) {
+	// double slash before www means, if current site is running on http,
+	// use http://www.gravatar.com, if current site is using https,
+	// use https://www.gravatar.com
+	return "//www.gravatar.com/avatar/" + user.UniqueID(), nil
 }
 
 type FileSystemAvatar struct{}
 
-func (f FileSystemAvatar) GetAvatarURL(c *client) (string, error) {
-	if userId, ok := c.userData["userId"]; ok {
-		if userIdStr, ok := userId.(string); ok {
-			ext, err := f.getFileExt(userIdStr)
-			if err != nil {
-				return "", ErrNoAvatarURL
-			}
-			return "/avatars/" + userIdStr + ext, nil
+func (f FileSystemAvatar) GetAvatarURL(user ChatUser) (string, error) {
+	if userId := user.UniqueID(); userId != "" {
+		ext, err := f.getFileExt(userId)
+		if err != nil {
+			return "", ErrNoAvatarURL
 		}
+		return "/avatars/" + userId + ext, nil
 	}
 	return "", ErrNoAvatarURL
 }
